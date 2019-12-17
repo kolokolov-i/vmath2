@@ -12,7 +12,7 @@ public class Main extends Application {
     public void start(Stage primaryStage) throws Exception{
         Parent root = FXMLLoader.load(getClass().getResource("/vmath2.fxml"));
         primaryStage.setTitle("Fourier interpolation");
-        primaryStage.setScene(new Scene(root, 640, 480));
+        primaryStage.setScene(new Scene(root, 900, 550));
         primaryStage.show();
     }
 

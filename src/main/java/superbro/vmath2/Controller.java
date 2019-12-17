@@ -15,6 +15,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
+import org.apache.commons.math3.complex.Complex;
 
 import java.net.URL;
 import java.util.ArrayList;
@@ -47,30 +48,34 @@ public class Controller implements Initializable {
         fillTable();
         colIndex.setCellValueFactory(t -> t.getValue().indexProperty());
         colFunction.setCellValueFactory(t -> t.getValue().functionProperty());
-        colResult.setCellValueFactory(t -> t.getValue().resultProperty());
+//        colResult.setCellValueFactory(t -> t.getValue().resultProperty());
     }
 
     private Float[] xx,
-            ff = {0f, null, 8f, null, 4f, null, 4f, null, 3f, null, 0f, null, -3f, null, -3f, null, -4f, null, -8f, null, 0f},
+            ff = {0f, 8f, 4f, 4f, 3f, 0f, -3f, -3f, -4f, -8f, 0f},
+            //ff = {0f, -8f, -7f, -6f, -5f, -4f, -3f, -2f, -1f, 0f, 2f, 4f, 7f, 10f, 8f, 5f, 2f, 0f, -1f, 1f, 0f},
+            //ff = {0f, 0f, 5f, 5f, 5f, 0f, 0f, -3f, -3f, -3f, 0f},
+            //ff = {0f, 0f, 5f, 5f, 5f, 5f, 5f, 5f, 5f, 0f, 0f},
             rr;
-    private int n = 21, fs = 2, nf = 10;
-    private float x0 = -5, xStep = 0.5f;
-    private float aa[];
+    private int n = 10;//, fs = 2;//, nn = 10;
+    private float x0 = 0;// xStep = 0.5f;
+    private Complex aa[];
+    private Complex res[];
 
     private void initData() {
-        xx = new Float[n];
-        rr = new Float[n];
+        xx = new Float[n+1];
+        rr = new Float[n+1];
         float curX = x0;
-        for (int i = 0; i < n; i++) {
+        for (int i = 0; i < n+1; i++) {
             xx[i] = curX;
-            curX += xStep;
+            curX++;
         }
     }
 
     private void fillTable() {
         items = new ArrayList<>();
-        for (int i = 0; i < n; i++) {
-            items.add(new ValueItem(xx[i], ff[i], rr[i]));
+        for (int i = 0; i < n+1; i++) {
+            items.add(new ValueItem(xx[i], ff[i]));
         }
         table.setItems(FXCollections.observableArrayList(items));
     }
@@ -83,51 +88,46 @@ public class Controller implements Initializable {
     }
 
     private void calcA() {
-        aa = new float[nf];
-        for (int i = 0; i < nf; i++) {
-            float s = 0;
-            for (int j = 0; j < i; j++) {
-                s += ff[j * fs] * Math.cos(2 * Math.PI * j * i * xx[j]);
+        aa = new Complex[n];
+        for (int k = 0; k < n; k++) {
+            Complex s = new Complex(0);
+            for (int j = 0; j < n; j++) {
+                float tf = ff[j];
+                double ti = -2 * Math.PI * xx[j] * k / n;
+                Complex t = new Complex(Math.cos(ti), Math.sin(ti));
+                s = s.add(t.multiply(tf));
             }
-            aa[i] = s * 2 / n;
+            System.out.printf("A[%d] = %f + i* %f\n", k, s.getReal(), s.getImaginary());
+            aa[k] = s;
         }
     }
-    /*
-    double A(int j)
-{
-double S=0;
-int ii;
-for (int i=-n;i<n+1;i++)
-	{
-
-	S=S+Function(2*pi*double(i)/(2*n+1))*cos(2*pi*double(j)*double(i)/(2*n+1));
-	}
-if (j==0) return 1/double(2*n+1)*S;
-
-return 2/double(2*n+1)*S;
-}
-     */
 
     private void calcR() {
-        for (int i = 0; i < n; i++) {
-            float s = 0;
-            for (int j = 0; j < nf; j++) {
-                s += aa[j] * Math.cos(xx[j]);
+        int xi = 0;
+        int mg = 5;
+        res = new Complex[n*mg+1];
+        float xStep = 1.f/mg;
+        for (float x = 0; x < n; x+=xStep) {
+            Complex tr = new Complex(0);
+            int ki = 0;
+            for (int k = 0; k < n/2; k++) {
+                double ti = 2*Math.PI*x*k/n;
+                Complex mul = aa[ki++].multiply(new Complex(Math.cos(ti), Math.sin(ti)));
+                System.out.printf("AA %f + i * %f\n", mul.getReal(), mul.getImaginary());
+                tr = tr.add(mul);
             }
-            rr[i] = s;
+            for (int k = -n/2; k < 0; k++) {
+                double ti = 2*Math.PI*x*k/n;
+                Complex mul = aa[ki++].multiply(new Complex(Math.cos(ti), Math.sin(ti)));
+                System.out.printf("AA %f + i * %f\n", mul.getReal(), mul.getImaginary());
+                tr = tr.add(mul);
+            }
+            float r = (float) tr.getReal()/n;
+            res[xi++] = new Complex(x, r);
+            System.out.printf("%f = %f\n", x, r);
+            //rr[xi++] = r;
         }
     }
-    /*
-    double Interpolate(double x)
-{
-double S=a[0];
-for (int i=1;i<n;i++)
-	{
-	S=S+a[i]*cos(double(i)*x)+b[i]*sin(double(i)*x);
-	}
-return S;
-}
-     */
 
     private void show() {
         XYChart.Series seriesF = new XYChart.Series();
@@ -141,11 +141,15 @@ return S;
         chart.getData().add(seriesF);
         XYChart.Series seriesR = new XYChart.Series();
         seriesR.setName("Result");
-        for (ValueItem item : items) {
-            if (item.getR() != null) {
-                seriesR.getData().add(new XYChart.Data(item.getI(), item.getR()));
-            }
+        for (Complex c : res){
+            if(c == null) continue;
+            seriesR.getData().add(new XYChart.Data(c.getReal(), c.getImaginary()));
         }
+//        for (ValueItem item : items) {
+//            if (item.getR() != null) {
+//                seriesR.getData().add(new XYChart.Data(item.getI(), item.getR()));
+//            }
+//        }
         chart.getData().add(seriesR);
     }
 
@@ -153,19 +157,19 @@ return S;
 
         private StringProperty indexProperty;
         private StringProperty functionProperty;
-        private StringProperty resultProperty;
+        //private StringProperty resultProperty;
 
         private Float i;
         private Float f;
-        private Float r;
+        //private Float r;
 
-        public ValueItem(Float i, Float f, Float r) {
+        public ValueItem(Float i, Float f) {
             indexProperty = new SimpleStringProperty(i == null ? "" : String.format("%2.1f", i));
             functionProperty = new SimpleStringProperty(f == null ? "" : String.format("%2.1f", f));
-            resultProperty = new SimpleStringProperty(r == null ? "" : String.format("%2.1f", r));
+            //resultProperty = new SimpleStringProperty(r == null ? "" : String.format("%2.1f", r));
             this.i = i;
             this.f = f;
-            this.r = r;
+            //this.r = r;
         }
 
         public Float getI() {
@@ -184,13 +188,13 @@ return S;
             this.f = f;
         }
 
-        public Float getR() {
-            return r;
-        }
+//        public Float getR() {
+//            return r;
+//        }
 
-        public void setR(Float r) {
-            this.r = r;
-        }
+//        public void setR(Float r) {
+//            this.r = r;
+//        }
 
         public StringProperty indexProperty() {
             return indexProperty;
@@ -200,8 +204,8 @@ return S;
             return functionProperty;
         }
 
-        public StringProperty resultProperty() {
-            return resultProperty;
-        }
+//        public StringProperty resultProperty() {
+//            return resultProperty;
+//        }
     }
 }
