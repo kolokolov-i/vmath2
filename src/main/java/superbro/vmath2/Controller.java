@@ -138,6 +138,7 @@ public class Controller implements Initializable {
                 seriesF.getData().add(new XYChart.Data(item.getI(), item.getF()));
             }
         }
+        chart.getData().clear();
         chart.getData().add(seriesF);
         XYChart.Series seriesR = new XYChart.Series();
         seriesR.setName("Result");
