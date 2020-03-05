@@ -1,7 +1,5 @@
 package superbro.vmath2;
 
-import javafx.beans.property.FloatProperty;
-import javafx.beans.property.SimpleFloatProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
@@ -9,12 +7,10 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.chart.LineChart;
-import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Button;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
-import javafx.scene.control.cell.PropertyValueFactory;
 import org.apache.commons.math3.complex.Complex;
 
 import java.net.URL;
@@ -34,8 +30,6 @@ public class Controller implements Initializable {
     private TableColumn<ValueItem, String> colIndex;
     @FXML
     private TableColumn<ValueItem, String> colFunction;
-    @FXML
-    private TableColumn<ValueItem, String> colResult;
 
     @FXML
     private LineChart<Number, Number> chart;
@@ -52,11 +46,10 @@ public class Controller implements Initializable {
     }
 
     private Float[] xx,
-            ff = {0f, 8f, 4f, 4f, 3f, 0f, -3f, -3f, -4f, -8f, 0f},
-            //ff = {0f, -8f, -7f, -6f, -5f, -4f, -3f, -2f, -1f, 0f, 2f, 4f, 7f, 10f, 8f, 5f, 2f, 0f, -1f, 1f, 0f},
-            //ff = {0f, 0f, 5f, 5f, 5f, 0f, 0f, -3f, -3f, -3f, 0f},
-            //ff = {0f, 0f, 5f, 5f, 5f, 5f, 5f, 5f, 5f, 0f, 0f},
-            rr;
+            ff = {0f, 8f, 4f, 4f, 3f, 0f, -3f, -3f, -4f, -8f, 0f};
+            //ff = {0f, -8f, -7f, -6f, -5f, -4f, -3f, -2f, -1f, 0f, 2f, 4f, 7f, 10f, 8f, 5f, 2f, 0f, -1f, 1f, 0f};
+            //ff = {0f, 0f, 5f, 5f, 5f, 0f, 0f, -3f, -3f, -3f, 0f};
+            //ff = {0f, 0f, 5f, 5f, 5f, 5f, 5f, 5f, 5f, 0f, 0f};
     private int n = 10;//, fs = 2;//, nn = 10;
     private float x0 = 0;// xStep = 0.5f;
     private Complex aa[];
@@ -64,7 +57,6 @@ public class Controller implements Initializable {
 
     private void initData() {
         xx = new Float[n+1];
-        rr = new Float[n+1];
         float curX = x0;
         for (int i = 0; i < n+1; i++) {
             xx[i] = curX;
@@ -125,7 +117,6 @@ public class Controller implements Initializable {
             float r = (float) tr.getReal()/n;
             res[xi++] = new Complex(x, r);
             System.out.printf("%f = %f\n", x, r);
-            //rr[xi++] = r;
         }
     }
 
@@ -146,11 +137,6 @@ public class Controller implements Initializable {
             if(c == null) continue;
             seriesR.getData().add(new XYChart.Data(c.getReal(), c.getImaginary()));
         }
-//        for (ValueItem item : items) {
-//            if (item.getR() != null) {
-//                seriesR.getData().add(new XYChart.Data(item.getI(), item.getR()));
-//            }
-//        }
         chart.getData().add(seriesR);
     }
 
@@ -158,19 +144,15 @@ public class Controller implements Initializable {
 
         private StringProperty indexProperty;
         private StringProperty functionProperty;
-        //private StringProperty resultProperty;
 
         private Float i;
         private Float f;
-        //private Float r;
 
         public ValueItem(Float i, Float f) {
             indexProperty = new SimpleStringProperty(i == null ? "" : String.format("%2.1f", i));
             functionProperty = new SimpleStringProperty(f == null ? "" : String.format("%2.1f", f));
-            //resultProperty = new SimpleStringProperty(r == null ? "" : String.format("%2.1f", r));
             this.i = i;
             this.f = f;
-            //this.r = r;
         }
 
         public Float getI() {
@@ -189,14 +171,6 @@ public class Controller implements Initializable {
             this.f = f;
         }
 
-//        public Float getR() {
-//            return r;
-//        }
-
-//        public void setR(Float r) {
-//            this.r = r;
-//        }
-
         public StringProperty indexProperty() {
             return indexProperty;
         }
@@ -204,9 +178,5 @@ public class Controller implements Initializable {
         public StringProperty functionProperty() {
             return functionProperty;
         }
-
-//        public StringProperty resultProperty() {
-//            return resultProperty;
-//        }
     }
 }
